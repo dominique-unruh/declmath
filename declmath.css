@@ -1,0 +1,35 @@
+.symbolIndexEntry {
+    display: none;
+}
+
+.symbolIndexBar {
+    position:fixed;
+    bottom:0%;
+    width:100%;
+    background-color: lightgray;
+    color: gray;
+    left:0%;
+    right:0%;
+    border-top: solid gray;
+    padding-left: 5pt;
+    padding-right: 5pt;
+}
+
+
+.symbolIndexPopup {
+    position:absolute;
+    background-color: lightgray;
+    color: gray;
+    border: solid gray;
+    padding-left: 5pt;
+    padding-right: 5pt;
+    width:auto;
+    height:auto;
+}
+
+.symbolIndexPlaceholder {
+    color: black;
+}
+
+.symbolIndexDescription {
+}

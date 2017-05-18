@@ -1,0 +1,119 @@
+# -*- mode: perl; -*-
+
+use LaTeXML::Package;
+use strict;
+use warnings;
+
+use Data::Dumper qw/Dumper/;
+
+RequireResource('declmath.css');
+
+DefKeyVal('declare@keyval','macro','DefToken');
+DefKeyVal('declare@keyval','argspec','{[Number][]}');
+DefKeyVal('declare@keyval','code','');
+DefKeyVal('declare@keyval','variantof','');
+
+DefConstructorI('\@@@declmath@internal@xmlinfo','{}{}{}', sub {
+ 		  my ($document,$cdname,$placeholder,$description) = @_;
+		  my $id = "symbolindexentry-".ToString($cdname);
+ 		  $document->openElement('ltx:para','xml:id'=>$id,'class'=>'symbolIndexEntry');
+ 		  $document->insertElement('ltx:p',$placeholder);
+ 		  $document->insertElement('ltx:p',$description);
+ 		  $document->closeElement('ltx:para');
+ 		});
+
+#DefConstructorI('\@@@declmath@internal@xmlinfo','{}', '<ltx:para class="symbolIndexEntry">#1</ltx:para>');
+
+our %macroToCDName = ();
+our %declarations = ();
+
+DefPrimitive('\declare RequiredKeyVals:declare@keyval', sub {
+	       my ($stomach, $kv) = @_;
+	       my $macro = $kv->getValue('macro');
+	       my $macroStr = ToString($macro);
+	       my $argspec = ToString($kv->getValue('argspec'));
+	       my $code = $kv->getValue('code');
+	       my $placeholder = $kv->getValue('placeholder');
+	       if (!defined $placeholder and $argspec eq '') {
+		 $placeholder = $macro; }
+	       my $description = $kv->getValue('description');
+	       my $variantof = $kv->getValue('variantof');
+	       my $variantofStr = ToString($variantof);
+
+	       # TODO: use from declaration if available
+	       my $cd = undef;
+	       my $name = undef;
+
+	       my $decription = $kv->getValue('description');
+
+
+	       if (defined $variantof) {
+		 die "$macroStr is variant of $variantofStr, but $variantofStr was not defined"
+		   if !defined $macroToCDName{$variantofStr};
+		 my $mainentry = $declarations{$macroToCDName{$variantofStr}};
+		 die if defined $cd;
+		 die if defined $name;
+		 $cd = $$mainentry{cd};
+		 $name = $$mainentry{name};
+	       }
+
+	       # Defaults:
+	       $cd = 'undeclared' if not defined $cd;
+	       if (not defined $name) {
+		 $name = $macroStr;
+		 $name =~ s/\\//g; }
+
+	       
+	       my $cdname = $cd.".".$name;
+
+	       # Define macro
+	       my ($numargs,$optarg) = (0,undef);
+	       if ($argspec ne '') {
+		 ($numargs,$optarg) = ($argspec =~ m/^\[([0-9]+)\](\[.*\])?$/)
+		   or die "Could not parse argspec ".Dumper($argspec);
+	       }
+	       my $paramspec = '{}' x $numargs;
+	       $paramspec = '[Default:$optarg]' if defined $optarg;
+	       DefMathI($macro,convertLaTeXArgs($numargs,$optarg),$code,
+			omcd=>$cd, meaning=>$name);
+
+
+
+	       
+	       # Create symbol index entry
+	       if (!defined $variantof) {
+		 die "No description for ".ToString($macro) if (!defined $description);
+		 die "No placeholder for ".ToString($macro) if (!defined $placeholder);
+		 
+		 die "Duplicate declaration for $cdname: ".ToString($macro)." vs ".ToString($declarations{$cdname}->{macro})
+		   if defined $declarations{$cdname};
+		 
+		 $declarations{$cdname} = { placeholder => $placeholder,
+					    description => $description,
+					    cd => $cd,
+					    name => $name,
+					    macro => $macro };
+		 $macroToCDName{$macroStr} = $cdname;
+	       }
+	       
+	       return;
+	     });
+
+#DefPrimitiveI('\printsymbolindex',undef, 'hello');
+
+DefPrimitiveI('\printsymbolindex',undef, sub {
+		my @result = ();
+		push @result, Digest(T_COMMENT("SYMBOL INDEX"));
+		for my $decl (values %declarations) {
+		  push @result, Digest(Invocation(T_CS('\@@@declmath@internal@xmlinfo'),
+						  "$$decl{cd}.$$decl{name}",
+						  Tokens(T_MATH,T_SPACE,$$decl{placeholder},T_MATH),
+						  $$decl{description}));
+		};
+		return @result;
+	      });
+
+DefMacroI('\symbolindexmark','{}','');
+
+1;
+
