@@ -6,6 +6,11 @@ use warnings;
 
 use Data::Dumper qw/Dumper/;
 
+RequirePackage('hyperref');
+
+our %macroToCDName = ();
+our %declarations = ();
+
 our %uniqueNames = ();
 sub uniqueName {
   my ($name) = @_;
@@ -31,17 +36,16 @@ DefKeyVal('declare@keyval','argspec','{[Number][]}');
 DefKeyVal('declare@keyval','code','');
 DefKeyVal('declare@keyval','variantof','');
 
-DefConstructorI('\@@@declmath@internal@xmlinfo','{}{}{}', sub {
- 		  my ($document,$cdname,$placeholder,$description) = @_;
+DefConstructorI('\@@@declmath@internal@xmlinfo','{}{}{}{}', sub {
+ 		  my ($document,$cdname,$placeholder,$description,$symbolindexlinks) = @_;
 		  my $id = "symbolindexentry-".ToString($cdname);
  		  $document->openElement('ltx:para','xml:id'=>$id,'class'=>'symbolIndexEntry');
  		  $document->insertElement('ltx:p',$placeholder);
  		  $document->insertElement('ltx:p',$description);
+ 		  $document->insertElement('ltx:p',$symbolindexlinks);
  		  $document->closeElement('ltx:para');
  		});
 
-our %macroToCDName = ();
-our %declarations = ();
 
 DefPrimitive('\declare RequiredKeyVals:declare@keyval', sub {
 	       my ($stomach, $kv) = @_;
@@ -79,7 +83,7 @@ DefPrimitive('\declare RequiredKeyVals:declare@keyval', sub {
 		 $name = $macroStr;
 		 $name =~ s/\\//g; }
 
-	       
+
 	       my $cdname = $cd.".".$name;
 
 	       # Define macro
@@ -108,7 +112,8 @@ DefPrimitive('\declare RequiredKeyVals:declare@keyval', sub {
 					    description => $description,
 					    cd => $cd,
 					    name => $name,
-					    macro => $macro };
+					    macro => $macro,
+					    symbolindexmarks => [] };
 		 $macroToCDName{$macroStr} = $cdname;
 	       }
 
@@ -119,10 +124,12 @@ DefPrimitiveI('\printsymbolindex',undef, sub {
 		my @result = ();
 		push @result, Digest(T_COMMENT("SYMBOL INDEX"));
 		for my $decl (values %declarations) {
+		  my $refs = Tokens(map { Invocation(T_CS('\htmlref'),'[X]',$_) } @{$decl->{symbolindexmarks}});
 		  push @result, Digest(Invocation(T_CS('\@@@declmath@internal@xmlinfo'),
 						  "$$decl{cd}.$$decl{name}",
 						  Tokens(T_MATH,T_SPACE,$$decl{placeholder},T_MATH),
-						  $$decl{description}));
+						  $$decl{description},
+						  $refs));
 		};
 		return @result;
 	      });
@@ -134,7 +141,9 @@ DefMacroI('\symbolindexmark','{}',sub {
 	    my $macroStr = ToString($macro);
 	    my $cdname = $macroToCDName{$macroStr};
 	    die "Undeclared math macro $macroStr" unless defined $cdname;
-	    my $label = uniqueName("symbolindexmark-$cdname");
+	    my $label = uniqueName("symbolindexmark:$cdname");
+	    my $decl = $declarations{$cdname};
+	    push @{$decl->{symbolindexmarks}}, $label;
 	    return Invocation(T_CS('\declmath@labelhere'),$label);
 	  });
 

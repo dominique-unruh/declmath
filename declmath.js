@@ -42,11 +42,14 @@ function csymbolToDescriptionTR(name) {
 	idxentry = $(idxentry);
 	var placeholder = idxentry.children().eq(0);
 	var description = idxentry.children().eq(1);
+	var links = idxentry.children().eq(2);
 	var placeholderSpan = $("<td>").addClass('symbolIndexPlaceholder').
 	    append(placeholder.clone().contents())
 	var descriptionSpan = $("<td>").addClass('symbolIndexDescription').
 	    append(description.clone().contents());
-	span.append(placeholderSpan,descriptionSpan);
+	var linkSpan = $("<td>").addClass('symbolIndexLinks').
+	    append(links.clone().contents());
+	span.append(linkSpan,placeholderSpan,descriptionSpan);
     } else {
 	console.warn("Symbol '"+name+"' not found; ");
 	return null;
