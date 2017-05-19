@@ -196,13 +196,15 @@
   }
   %
   % \symbolindexentry{id}{symbol}{description}{pages}
-  \newcommand\symbolindexentry[4]{$##2$&##3&##4\\}
-  \newenvironment{thesymbolindex}{\begin{tabularx}{\hsize}{lXl}}{\end{tabularx}}
+  \newcommand\symbolindexentry[4]{\noindent\hbox{\hbox to 1.3in{$##2$\hfill}\parbox[t]{3.5in}{##3}\hbox to 1cm{\hfill ##4}}\\[2pt]}
+  \newenvironment{thesymbolindex}{\section*{Symbol index}\begin{center}}{\end{center}}
+  %\newcommand\symbolindexentry[4]{$##2$&##3&##4\\}
+  %\newenvironment{thesymbolindex}{\begin{tabularx}{\hsize}{lXl}}{\end{tabularx}}
   \newcommand\symbolindexpage[2]{\ifx\hyperref\@undefined##1\else\hyperref[##2]{##1}\fi}
   \newcommand\printsymbolindex{{%
       \makeatletter
       \begin{thesymbolindex}
-        \InputIfFileExists{\jobname.sdx}{}{} % TODO: Warning if nonexisting
+        \InputIfFileExists{\jobname.sdx}{}{\error} % TODO: Warning if nonexisting
       \end{thesymbolindex}
     }}
 }

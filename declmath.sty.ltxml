@@ -6,7 +6,25 @@ use warnings;
 
 use Data::Dumper qw/Dumper/;
 
+our %uniqueNames = ();
+sub uniqueName {
+  my ($name) = @_;
+  if (!defined $uniqueNames{$name}) {
+    $uniqueNames{$name} = 1;
+    return $name;
+  }
+  for (my $i = 1; ; $i++) {
+    my $name1 = $name.$i;
+    if (!defined $uniqueNames{$name1}) {
+      $uniqueNames{$name1} = 1;
+      return $name1;
+    }
+  }
+}
+
 RequireResource('declmath.css');
+RequireResource('https://code.jquery.com/jquery-3.2.1.min.js');
+RequireResource('declmath.js');
 
 DefKeyVal('declare@keyval','macro','DefToken');
 DefKeyVal('declare@keyval','argspec','{[Number][]}');
@@ -21,8 +39,6 @@ DefConstructorI('\@@@declmath@internal@xmlinfo','{}{}{}', sub {
  		  $document->insertElement('ltx:p',$description);
  		  $document->closeElement('ltx:para');
  		});
-
-#DefConstructorI('\@@@declmath@internal@xmlinfo','{}', '<ltx:para class="symbolIndexEntry">#1</ltx:para>');
 
 our %macroToCDName = ();
 our %declarations = ();
@@ -79,15 +95,15 @@ DefPrimitive('\declare RequiredKeyVals:declare@keyval', sub {
 
 
 
-	       
+
 	       # Create symbol index entry
 	       if (!defined $variantof) {
 		 die "No description for ".ToString($macro) if (!defined $description);
 		 die "No placeholder for ".ToString($macro) if (!defined $placeholder);
-		 
+
 		 die "Duplicate declaration for $cdname: ".ToString($macro)." vs ".ToString($declarations{$cdname}->{macro})
 		   if defined $declarations{$cdname};
-		 
+
 		 $declarations{$cdname} = { placeholder => $placeholder,
 					    description => $description,
 					    cd => $cd,
@@ -95,11 +111,9 @@ DefPrimitive('\declare RequiredKeyVals:declare@keyval', sub {
 					    macro => $macro };
 		 $macroToCDName{$macroStr} = $cdname;
 	       }
-	       
+
 	       return;
 	     });
-
-#DefPrimitiveI('\printsymbolindex',undef, 'hello');
 
 DefPrimitiveI('\printsymbolindex',undef, sub {
 		my @result = ();
@@ -113,7 +127,16 @@ DefPrimitiveI('\printsymbolindex',undef, sub {
 		return @result;
 	      });
 
-DefMacroI('\symbolindexmark','{}','');
+DefConstructorI('\declmath@labelhere','{}', '<ltx:inline-itemize><ltx:inline-item labels="LABEL:#1"><ltx:tag/></ltx:inline-item></ltx:inline-itemize>');
+
+DefMacroI('\symbolindexmark','{}',sub {
+	    my ($gullet,$macro) = @_;
+	    my $macroStr = ToString($macro);
+	    my $cdname = $macroToCDName{$macroStr};
+	    die "Undeclared math macro $macroStr" unless defined $cdname;
+	    my $label = uniqueName("symbolindexmark-$cdname");
+	    return Invocation(T_CS('\declmath@labelhere'),$label);
+	  });
 
 1;
 
