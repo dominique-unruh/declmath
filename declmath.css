@@ -1,3 +1,12 @@
+.declMathDefRef:after {
+    content: "\21e8";
+    font-weight: bold;
+}
+
+.symbolIndexLinks > a {
+    text-decoration: none;
+}
+
 .symbolIndexEntry {
     display: none;
 }

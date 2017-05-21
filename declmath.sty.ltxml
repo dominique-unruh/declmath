@@ -35,6 +35,9 @@ DefKeyVal('declare@keyval','macro','DefToken');
 DefKeyVal('declare@keyval','argspec','{[Number][]}');
 DefKeyVal('declare@keyval','code','');
 DefKeyVal('declare@keyval','variantof','');
+DefKeyVal('declare@keyval','variable',''); # true/false
+DefKeyVal('declare@keyval','cd','');
+DefKeyVal('declare@keyval','name','');
 
 DefConstructorI('\@@@declmath@internal@xmlinfo','{}{}{}{}', sub {
  		  my ($document,$cdname,$placeholder,$description,$symbolindexlinks) = @_;
@@ -46,6 +49,14 @@ DefConstructorI('\@@@declmath@internal@xmlinfo','{}{}{}{}', sub {
  		  $document->closeElement('ltx:para');
  		});
 
+sub kvAsBool {
+  my ($val) = @_;
+  return 0 unless defined $val;
+  $val = ToString($val);
+  return 0 if $val eq 'false';
+  return 1 if $val eq 'true';
+  die "Expected true/false";
+};
 
 DefPrimitive('\declare RequiredKeyVals:declare@keyval', sub {
 	       my ($stomach, $kv) = @_;
@@ -59,10 +70,10 @@ DefPrimitive('\declare RequiredKeyVals:declare@keyval', sub {
 	       my $description = $kv->getValue('description');
 	       my $variantof = $kv->getValue('variantof');
 	       my $variantofStr = ToString($variantof);
-
-	       # TODO: use from declaration if available
-	       my $cd = undef;
-	       my $name = undef;
+	       my $variable = kvAsBool($kv->getValue('variable'));
+	       
+	       my $cd = $kv->getValue('cd'); $cd = ToString($cd) if defined $cd;
+	       my $name = $kv->getValue('name'); $name = ToString($name) if defined $name;
 
 	       my $decription = $kv->getValue('description');
 
@@ -77,26 +88,40 @@ DefPrimitive('\declare RequiredKeyVals:declare@keyval', sub {
 		 $name = $$mainentry{name};
 	       }
 
+	       if ($variable) {
+		 if (defined $cd) { die "Must not define cd=... when variable=true"; };
+		 $cd = 'variable';
+		 if (!defined $name) {
+		   $name = $macroStr;
+		   $name =~ s/\\//g;
+		 }
+		 $name = uniqueName($name);
+	       }
+
 	       # Defaults:
-	       $cd = 'undeclared' if not defined $cd;
+	       $cd = 'local' if not defined $cd;
 	       if (not defined $name) {
 		 $name = $macroStr;
 		 $name =~ s/\\//g; }
 
-
 	       my $cdname = $cd.".".$name;
 
 	       # Define macro
-	       my ($numargs,$optarg) = (0,undef);
-	       if ($argspec ne '') {
-		 ($numargs,$optarg) = ($argspec =~ m/^\[([0-9]+)\](\[.*\])?$/)
-		   or die "Could not parse argspec ".Dumper($argspec);
-	       }
-	       my $paramspec = '{}' x $numargs;
-	       $paramspec = '[Default:$optarg]' if defined $optarg;
-	       DefMathI($macro,convertLaTeXArgs($numargs,$optarg),$code,
-			omcd=>$cd, meaning=>$name);
-
+	       if (defined $code) {
+		 my ($numargs,$optarg) = (0,undef);
+		 if ($argspec ne '') {
+		   ($numargs,$optarg) = ($argspec =~ m/^\[([0-9]+)\](\[.*\])?$/)
+		     or die "Could not parse argspec ".Dumper($argspec);
+		 }
+		 my $paramspec = convertLaTeXArgs($numargs,$optarg);
+		 if ($cd eq 'variable') {
+		   DefMathI($macro,$paramspec,$code, name=>$name);
+		 } else {
+		   DefMathI($macro,$paramspec,$code, omcd=>$cd, meaning=>$name);
+		 }
+	       } else {
+		 die "argspec=$argspec given, but code=... not given" if defined $argspec;
+	       };
 
 
 
@@ -120,11 +145,15 @@ DefPrimitive('\declare RequiredKeyVals:declare@keyval', sub {
 	       return;
 	     });
 
+DefConstructorI('\declMath@DefRef','{}',
+		"<ltx:ref class='declMathDefRef' labelref='LABEL:#1'>\x{feff}</ltx:ref>");
+
+
 DefPrimitiveI('\printsymbolindex',undef, sub {
 		my @result = ();
 		push @result, Digest(T_COMMENT("SYMBOL INDEX"));
 		for my $decl (values %declarations) {
-		  my $refs = Tokens(map { Invocation(T_CS('\htmlref'),'[X]',$_) } @{$decl->{symbolindexmarks}});
+		  my $refs = Tokens(map { Invocation(T_CS('\declMath@DefRef'),$_) } @{$decl->{symbolindexmarks}});
 		  push @result, Digest(Invocation(T_CS('\@@@declmath@internal@xmlinfo'),
 						  "$$decl{cd}.$$decl{name}",
 						  Tokens(T_MATH,T_SPACE,$$decl{placeholder},T_MATH),

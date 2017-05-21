@@ -49,7 +49,7 @@ function csymbolToDescriptionTR(name) {
 	    append(description.clone().contents());
 	var linkSpan = $("<td>").addClass('symbolIndexLinks').
 	    append(links.clone().contents());
-	span.append(linkSpan,placeholderSpan,descriptionSpan);
+	span.append(placeholderSpan,linkSpan,descriptionSpan);
     } else {
 	console.warn("Symbol '"+name+"' not found; ");
 	return null;
