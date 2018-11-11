@@ -1,4 +1,0 @@
-
-DefMathI('\zz',undef,'\mathbf w',name => 'q');
-
-1;
