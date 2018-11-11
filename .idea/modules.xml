@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<project version="4">
-  <component name="ProjectModuleManager">
-    <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/declmath.iml" filepath="$PROJECT_DIR$/.idea/modules/declmath.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/declmath-build.iml" filepath="$PROJECT_DIR$/.idea/modules/declmath-build.iml" />
-    </modules>
-  </component>
-</project>
