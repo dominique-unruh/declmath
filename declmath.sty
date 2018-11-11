@@ -157,10 +157,15 @@
   \global\@namedef{symbolindex@marked@#1}{yes}%
 }
 %
-% \symbolindexmark{\macro}
+% \symbolindexmark{\macro}{tex}
 % registers current position as the place where \macro is defined (linked in symbol index)
 % (by calling \symbolindex@writemark{id} for that macro)
-\DeclareRobustCommand\symbolindexmark[1]{%
+% The second argument is just rendered, possibly highlighted using \symbolindexmarkhighlight
+\DeclareRobustCommand\symbolindexmark[2]{%
+  \symbolindexmarkonly{#1}%
+  \symbolindexmarkhighlight{#2}%
+}
+\DeclareRobustCommand\symbolindexmarkonly[1]{%
   % \@tempa
   \def\@tempa{#1}%
   \@ifundefined{symbolindex@mark@\expandafter\strip@prefix\meaning\@tempa}{%
@@ -183,6 +188,8 @@
   }}
 
 
+\def\symbolindexmarkhighlight#1{#1}
+
 
 \ProcessKeyvalOptions*
 
@@ -191,6 +198,6 @@
 %%% Local Variables:
 %%% mode: latex
 %%% coding: latin-1
-%%% TeX-master: "language3"
+%%% TeX-master: "ghost"
 %%% End:
 %%% Local IspellDict: american
