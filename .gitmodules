@@ -1,0 +1,9 @@
+[submodule "sTeX"]
+	path = sTeX
+	url = git@github.com:KWARC/sTeX.git
+[submodule "LaTeXML"]
+	path = LaTeXML
+	url = git@github.com:brucemiller/LaTeXML.git
+[submodule "LaTeXML-Plugin-sTeX"]
+	path = LaTeXML-Plugin-sTeX
+	url = git@github.com:KWARC/LaTeXML-Plugin-sTeX.git
