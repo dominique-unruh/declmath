@@ -3,6 +3,8 @@ export PERL5LIB
 TEXINPUTS = .//:
 export TEXINPUTS
 
+default : xml
+
 .DELETE_ON_ERROR :
 
 link_stex :
@@ -15,13 +17,13 @@ pdf :
 	pdflatex test.tex
 
 build_latexml :
-	git submodule update --checkout --init --recommend-shallow LaTeXML
+	git submodule update --checkout --init LaTeXML
 	cd LaTeXML && perl Makefile.PL
 	make -C LaTeXML
 	#make -C LaTeXML test
 
 build_latexml_stex : build_latexml
-	git submodule update --checkout --init --recommend-shallow LaTeXML-Plugin-sTeX
+	git submodule update --checkout --init LaTeXML-Plugin-sTeX
 	cd LaTeXML-Plugin-sTeX && perl Makefile.PL
 	make -C LaTeXML-Plugin-sTeX
 	#PERL5LIB=../LaTeXML/blib/lib/ make -C LaTeXML-Plugin-sTeX test
