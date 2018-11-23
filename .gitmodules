@@ -6,4 +6,4 @@
 	url = git@github.com:brucemiller/LaTeXML.git
 [submodule "LaTeXML-Plugin-sTeX"]
 	path = LaTeXML-Plugin-sTeX
-	url = git@github.com:KWARC/LaTeXML-Plugin-sTeX.git
+	url = git@github.com:dominique-unruh/LaTeXML-Plugin-sTeX.git
