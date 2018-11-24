@@ -1,0 +1,34 @@
+\documentclass{omdoc}
+
+\usepackage{modules}
+\usepackage{cmath}
+
+\newtheorem{lemma}{Lemma}
+
+\begin{module}[id=myPaper]
+  \symdef[name=powerset]{power}[1]{2^{#1}}
+  \termdef[name=powerset]{powerset}{power set}
+  
+  \symdef[name=cardinality]{card}[1]{\lvert#1\rvert}
+  \termdef[name=cardinality]{cardinality}{cardinality}
+\end{module}
+
+\begin{document}
+
+\section{Example section}
+
+\usemodule{myPaper}
+
+\begin{definition}[title=\capitalize\cardinality]
+  The \emph{\cardinality} of a set $S$ is denoted $\card S$ and tells us how big it is.
+\end{definition}
+
+\begin{definition}[title=\capitalize\powerset]
+  Given a set $S$, the \emph{\powerset} of $S$ is denoted $\power S$.
+\end{definition}
+
+\begin{lemma}[Cantor]
+  $\card S\neq\card{\power S}$.
+\end{lemma}
+
+\end{document}
