@@ -40,7 +40,7 @@ def write_index(basename):
             pages = sym["page*"] if "page*" in sym else []
             pages = ["\\symbolindexpage{{{0}}}{{{1}--symbolindex}}".format(*string.split(p,",")) for p in pages]
             pages = string.join(pages,", ")
-            f.write("\\symbolindexentry{{{0}}}{{{1}}}{{{2}}}{{{3}}}\n".
+            f.write("\\symbolindexentry{{{0}}}{{{1}}}{{{2}}}{{{3}}}%\n".
                     format(id,placeholder,description,pages))
         f.write("""%%% {0} Variables:
 %%% mode: latex
