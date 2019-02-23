@@ -1,6 +1,95 @@
 #!/usr/bin/python
+### -*- buffer-read-only: t -*-
+### MAC=e2d0394e6f42e904b5ea02d618e436298288e940
+### LEN=11660
+### CONTENT_SHA1=7f656717316cc7586c6eb179e1320e92c75ac2fa
+### 
+### 
+### 
+### *** WARNING ***
+### This is not the master copy of this file.
+### You can edit this copy, nothing bad will happen.
+### But it will prevent Dominique Unruh from automatically
+### transferring changes from the master copy to this copy.
+### Be prepared to answer to Dominique!
+### 
+### (If you are Dominique Unruh, disregard the above warning.)
+### 
+### 
+### 
+### 
+### Source: /home/unruh/svn/home/eclipse/math_parse/makesymind.py
+### SVN: 67305
+### 
+### 
+### 
+#!/usr/bin/python
 
 import sys, re, string
+
+true_tab = ["true", "yes"]
+page_tab = ["pages", "page"]
+
+class Symbol():
+    """docstring for Symbol"""
+    id = 1
+    noindex = False
+    variantof = ""
+    macro = ""
+    placeholder = ""
+    code = ""
+    description = ""
+    pages = tuple()
+
+    def __init__(self, args):
+        """Takes a bunch of attrs and passes them to ``set_attrs``"""
+        self.set_attrs(args)
+
+    def set_attrs(self, args):
+        try:
+            if args[0] == "id":
+                self.id = args[1]
+            if args[0] == "noindex":
+                self.set_noindex(args[1])
+            if args[0] == "variantof":
+                self.set_variantof(args[1])
+            if args[0] == "macro":
+                self.set_macro(args[1])
+            if args[0] == "placeholder":
+                self.set_placeholder(args[1])
+            if args[0] == "code":
+                self.set_code(args[1])
+            if args[0] == "description":
+                self.set_description(args[1])
+            if args[0] in page_tab:
+                self.add_page(args[1])
+        except KeyError:
+            msg = "empty args"
+
+
+    def set_noindex(self, val):
+        if val in true_tab:
+            self.noindex = True
+    def set_variantof(self, val):
+        self.variantof = val
+    def set_macro(self, val):
+        self.macro = val
+    def set_placeholder(self, val):
+        self.placeholder = val
+    def set_code(self, val):
+        self.code = val
+    def set_description(self, val):
+        self.description = val
+    def set_pages(self, val):
+        self.pages = val
+
+    def add_page(self, val):
+        values = val.split(',')
+        page = (int(values[0]) ,int(values[1]) )
+        self.pages += (page,)
+        if len(self.pages)>1:
+            self.pages = tuple(sorted(self.pages))
+
 
 
 ########## Symbol index generation code #############
@@ -12,41 +101,71 @@ def fail(msg):
 symbols = dict()
 
 def load_symbols(file):
+    """input: file.syi"""
     global symbols
     with open(file,'rt') as f:
         for line in f:
             m = re.match(r"([0-9]+)\.([a-z]+)=(.*)",line)
             if not m: fail("Malformatted line {0} in {1}".format(line,file))
+            #save contents of each line to symbols
             id = m.group(1); key = m.group(2); val = m.group(3)
-            if not id in symbols: symbols[id] = dict()
-            if not key+"*" in symbols[id]: symbols[id][key+"*"] = []
-            symbols[id][key+"*"].append(val)
-            symbols[id][key] = val
+            if not id in symbols: symbols[id] = Symbol(("id", int(id)))
+            # if not key+"*" in symbols[id]: symbols[id][key+"*"] = []
+            symbols[id].set_attrs((key, val))
 
 def write_index(basename):
     global symbols
+    symbols=list(symbols.values())
+    symbols.sort(key=lambda symbol: symbol.pages)
+
+    #sorted((d for d in x if d['student']==1), key=itemgetter('age'))
+
     with open(basename+".sdx",'wt') as f:
-        for id in symbols:
-            sym = symbols[id]
-            if "noindex" in sym: continue
-            if "variantof" in sym: continue
-            if not "macro" in sym: fail("id {0} has no macro definition".format(id))
-            macro = sym["macro"]
-            if "placeholder" in sym: placeholder=sym["placeholder"]
-            elif "code" in sym: placeholder=sym["code"]
+        for sym in symbols:
+            # get data from the list symbols
+            if sym.noindex == True: continue
+            if sym.variantof: continue
+            if not sym.macro: fail("id {0} has no macro definition".format(sym.id))
+            macro = sym.macro
+            if sym.placeholder: placeholder = sym.placeholder
+            elif sym.code: placeholder=sym.code
             else: placeholder=macro
-            if not "description" in sym: fail("id {0} (macro {1}) has no description".format(id,macro))
-            description=sym["description"]
-            pages = sym["page*"] if "page*" in sym else []
-            pages = ["\\symbolindexpage{{{0}}}{{{1}--symbolindex}}".format(*string.split(p,",")) for p in pages]
+            if not sym.description: fail("id {0} (macro {1}) has no description".format(sym.id, macro))
+            description=sym.description
+            pages = sym.pages
+            # write everything down
+            pages = ["\\symbolindexpage{{{0}}}{{{1}--symbolindex}}".format(p[0], p[1]) for p in pages]
             pages = string.join(pages,", ")
-            f.write("\\symbolindexentry{{{0}}}{{{1}}}{{{2}}}{{{3}}}%\n".
-                    format(id,placeholder,description,pages))
+            f.write("\\symbolindexentry{{{0}}}{{{1}}}{{{2}}}{{{3}}}\n".
+                    format(sym.id,placeholder,description,pages))
         f.write("""%%% {0} Variables:
 %%% mode: latex
 %%% coding: latin-1
 %%% TeX-master: "{1}"
 %%% End:""".format("Local",basename))
+
+#     with open(basename+".sdx",'wt') as f:
+#         for id in symbols:
+#             sym = symbols[id]
+#             if "noindex" in sym: continue
+#             if "variantof" in sym: continue
+#             if not "macro" in sym: fail("id {0} has no macro definition".format(id))
+#             macro = sym["macro"]
+#             if "placeholder" in sym: placeholder=sym["placeholder"]
+#             elif "code" in sym: placeholder=sym["code"]
+#             else: placeholder=macro
+#             if not "description" in sym: fail("id {0} (macro {1}) has no description".format(id,macro))
+#             description=sym["description"]
+#             pages = sym["page*"] if "page*" in sym else []
+#             pages = ["\\symbolindexpage{{{0}}}{{{1}--symbolindex}}".format(*string.split(p,",")) for p in pages]
+#             pages = string.join(pages,", ")
+#             f.write("\\symbolindexentry{{{0}}}{{{1}}}{{{2}}}{{{3}}}\n".
+#                     format(id,placeholder,description,pages))
+#         f.write("""%%% {0} Variables:
+# %%% mode: latex
+# %%% coding: latin-1
+# %%% TeX-master: "{1}"
+# %%% End:""".format("Local",basename))
 
 
 
