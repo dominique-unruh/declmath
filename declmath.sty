@@ -51,153 +51,281 @@
   \declmath@end
 }
 
-
-\declmath@register@key{macro}{}{Name of macro to be declared (may also be a non-macro like "+" or "a" or an existing macro, don't use code=... then)}
-\declmath@register@key{code}{}{Code of the macro (i.e., does \string\newcommand{macro}{code})}
-\declmath@register@key{argspec}{}{Specifies which arguments the macro takes (\string\newcommand-style, like [1][default])}
-\declmath@register@key{wrap}{}{Specifies a wrapper for the macro code. 
-                               wrap=none uses none.
-                               wrap=weakgroup (default) uses \string\begingroup\string\endgroup.
-                               wrap=group puts it in a {}-group (allows $a^\string\macro$ instead of $a^{\string\macro}$).}
-\declmath@register@key{variable}{}{Indicates that this is a variable, not a mathematical symbol (relevant for conversion to MathML)}
-\declmath@register@key{placeholder}{}{Placeholder for this macro in symbol index}
-\declmath@register@key{description}{}{Description for this macro in symbolindex}
-\declmath@register@key{label}{}{Label to be put where \string\symbolindexmark{...} is called}
-\declmath@register@key{nopage}{}{nopage=true (or yes/1/anything) will disable warnings if \string\symbolindexmark{\string\macro} is not used}
-\declmath@register@key{noindex}{}{noindex=true (or yes/1/anything) will remove this symbol from the index}
-\declmath@register@key{variantof}{}{variantof=\string\macro indicates that the symbolindex entry for \string\macro applies to the current macro (current macro has no own index entry)}
-\declmath@register@end{%
-  \ifx\declmath@macro@value\@undefined\else
-  \ifx\declmath@code@value\@undefined\else
-  % Calls \newcommand<macro><argspec>{\declmath@wrapper@<wrap>{<code>}}
-  \letcs\@tempa{declmath@wrapper@\csuse{declmath@wrap@value}}%
-  \ifdef\@tempa{}{\PackageError{declmath/define}{Unknown wrapper wrap=\declmath@wrap@value}{Try, e.g., wrap=group}}%
-  \edef\@tempb{\noexpand\newcommand
-               \expandonce\declmath@macro@value
-               \csuse{declmath@argspec@value}%
-               {\@tempa{\expandonce\declmath@code@value}}}%
-  \typeout{DECLMATH: define command: \meaning\@tempb}%
-  \@tempb
-  \fi\fi
-  %
-  % Allows to look up the \declmath@id of the current definition through the macro name
-  \ifx\declmath@macro@value\@undefined\else
-    \csxdef{declmath:ref:\expandafter\string\declmath@macro@value}{\number\declmath@id}%
-  \fi
-}
+% Package option: ignoreundef=key1,key2,...
+% The keys key1,key2,... will not give error messages
+% when used in \declare{...}, even if they are undefined%
 %
-\def\declmath@wrapper@none#1{#1}%
-\def\declmath@wrapper@weakgroup#1{\begingroup#1\endgroup}%
-\def\declmath@wrapper@group#1{{#1}}%
-\let\declmath@wrapper@\declmath@wrapper@weakgroup% default
+% This is useful when (temporarily) deactivating subpackages 
+% while keeping the corresponding keys in the \declare{}-commands
+\define@key{declmath}{ignore}{%
+  \typeout{declmath package: ignore}%
+  \def\@tempb{#1}%
+  \@for\@tempa:=\@tempb\do{%
+    \expandafter\declmath@register@key\expandafter{\@tempa}{}{--- silently ignored ---}}}
 
 
 
-
-%
-\newwrite\symbolindex@out
-\immediate\openout\symbolindex@out=\jobname.syi
-%
-% \symbolindex@output{key}{value} outputs id.key=value to .syi file
-\def\symbolindex@output#1#2{%
-  \ifx#2\@undefined\else
-  \expandafter\@temptokena\expandafter{#2}%
-  \immediate\write\symbolindex@out{\number\declmath@id.#1=\the\@temptokena}\fi
-}
-%
-% contains all defined macros (in the form \symbolindex@warn{id}{macro}{text}), 
-% to check in the end whether warnings (with info text based on <macro> <text>) should be issued.
-% not: both <macro> and <text> contain only catcode other, not macros
-\def\symbolindex@warn@list{}
-\AtEndDocument{\symbolindex@warn@list}
-\def\symbolindex@warn#1#2#3{\@ifundefined{symbolindex@marked@#1}{%
-    \PackageWarning{declmath/symbolindex}{Place of definition for #2 #3 not marked. Use \string\symbolindexmark{#2} at that location (or declare with nopage=yes)}}{}}%
-%
-\declmath@register@end{%
-  % output all data for makesymind.py
-  \symbolindex@output{macro}\declmath@macro@value
-  \symbolindex@output{code}\declmath@code@value
-  \symbolindex@output{description}\declmath@description@value
-  \symbolindex@output{placeholder}\declmath@placeholder@value
-  \symbolindex@output{noindex}\declmath@noindex@value
-  \symbolindex@output{variantof}\declmath@variantof@value
-  % essentially \def\symbolindex@mark@xxx{\symbolindex@writemark{id}\label{label}}
-  % where xxx is a textual representation of the currently defined macro
-  \ifx\declmath@macro@value\@undefined\else
-    \expandafter\def\expandafter\@tempa\expandafter{\declmath@macro@value}%
-    \edef\@tempa{\noexpand\@namedef{symbolindex@mark@\expandafter\strip@prefix\meaning\@tempa}{\noexpand\symbolindex@writemark{\number\declmath@id}\ifx\declmath@label@value\@undefined\else\noexpand\label{\declmath@label@value}\fi}}%
-    \@tempa
-    % Register macro to enable warning if unmarked, unless nopage=...
-    % (by adding \symbolindex@warn{id}{macro}{text} to \symbolindex@warn@list
-    %  with text := "macro (id: id)")
-    \ifx\declmath@nopage@value\@undefined
-      \expandafter\def\expandafter\@tempa\expandafter{\declmath@macro@value}%
-      \edef\@tempa{\noexpand\g@addto@macro\noexpand\symbolindex@warn@list
-                   {\noexpand\symbolindex@warn{\number\declmath@id}{%
-                       \expandafter\strip@prefix\meaning\@tempa}{(id: \number\declmath@id)}}}%
-      \@tempa
+\DeclareVoidOption{define}{%
+  \typeout{declmath package: define}%
+  \declmath@register@key{macro}{}{Name of macro to be declared (may also be a non-macro like "+" or "a" or an existing macro, don't use code=... then)}
+  \declmath@register@key{code}{}{Code of the macro (i.e., does \string\newcommand{macro}{code})}
+  \declmath@register@key{argspec}{}{Specifies which arguments the macro takes (\string\newcommand-style, like [1][default])}
+  \declmath@register@key{wrap}{}{Specifies a wrapper for the macro code. 
+                                 wrap=none uses none.
+                                 wrap=weakgroup (default) uses \string\begingroup\string\endgroup.
+                                 wrap=group puts it in a {}-group (allows $a^\string\macro$ instead of $a^{\string\macro}$).}
+  \declmath@register@end{%
+    \ifx\declmath@macro@value\@undefined\else
+    \ifx\declmath@code@value\@undefined\else
+    % Calls \newcommand<macro><argspec>{\declmath@wrapper@<wrap>{<code>}}
+    \letcs\@tempa{declmath@wrapper@\csuse{declmath@wrap@value}}%
+    \ifdef\@tempa{}{\PackageError{declmath/define}{Unknown wrapper wrap=\declmath@wrap@value}{Try, e.g., wrap=group}}%
+    \edef\@tempb{\noexpand\newcommand
+                 \expandonce\declmath@macro@value
+                 \csuse{declmath@argspec@value}%
+                 {\@tempa{\expandonce\declmath@code@value}}}%
+    \typeout{DECLMATH: define command: \meaning\@tempb}%
+    \@tempb
+    \fi\fi
+    %
+    % Allows to look up the \declmath@id of the current definition through the macro name
+    \ifx\declmath@macro@value\@undefined\else
+      \csxdef{declmath:ref:\expandafter\string\declmath@macro@value}{\number\declmath@id}%
     \fi
+  }
+  %
+  \def\declmath@wrapper@none##1{##1}%
+  \def\declmath@wrapper@weakgroup##1{\begingroup##1\endgroup}%
+  \def\declmath@wrapper@group##1{{##1}}%
+  \let\declmath@wrapper@\declmath@wrapper@weakgroup% default
+}
+
+
+
+\DeclareVoidOption{mathcheck}{%
+  \typeout{declmath package: mathcheck}%
+  \declmath@register@key{grammar}{}{Define a grammar rule for mathcheck tool}
+}
+
+
+
+\DeclareVoidOption{symbolindex}{%
+  \typeout{declmath package: symbolindex}%
+  %
+  \declmath@register@key{macro}{}{Name of macro to be listed in symbol index}
+  \declmath@register@key{placeholder}{}{Placeholder for this macro in symbol index}
+  \declmath@register@key{code}{}{Code of the macro (used as default placeholder)}
+  \declmath@register@key{description}{}{Description for this macro in symbolindex}
+  \declmath@register@key{label}{}{Label to be put where \string\symbolindexmark{...} is called}
+  \declmath@register@key{nopage}{}{nopage=true (or yes/1/anything) will disable warnings if \string\symbolindexmark{\string\macro} is not used}
+  \declmath@register@key{noindex}{}{noindex=true (or yes/1/anything) will remove this symbol from the index}
+  \declmath@register@key{variantof}{}{variantof=\string\macro indicates that the symbolindex entry for \string\macro applies to the current macro (current macro has no own index entry)}
+  %
+  \newwrite\symbolindex@out
+  \immediate\openout\symbolindex@out=\jobname.syi
+  %
+  % \symbolindex@output{key}{value} outputs id.key=value to .syi file
+  \def\symbolindex@output##1##2{%
+    \ifx##2\@undefined\else
+    \expandafter\@temptokena\expandafter{##2}%
+    \immediate\write\symbolindex@out{\number\declmath@id.##1=\the\@temptokena}\fi
+  }
+  %
+  % contains all defined macros (in the form \symbolindex@warn{id}{macro}{text}), 
+  % to check in the end whether warnings (with info text based on <macro> <text>) should be issued.
+  % not: both <macro> and <text> contain only catcode other, not macros
+  \def\symbolindex@warn@list{}
+  \AtEndDocument{\symbolindex@warn@list}
+  \def\symbolindex@warn##1##2##3{\@ifundefined{symbolindex@marked@##1}{%
+      \PackageWarning{declmath/symbolindex}{Place of definition for ##2 ##3 not marked. Use \string\symbolindexmark{##2} at that location (or declare with nopage=yes)}}{}}%
+  %
+  \declmath@register@end{%
+    % output all data for makesymind.py
+    \symbolindex@output{macro}\declmath@macro@value
+    \symbolindex@output{code}\declmath@code@value
+    \symbolindex@output{description}\declmath@description@value
+    \symbolindex@output{placeholder}\declmath@placeholder@value
+    \symbolindex@output{noindex}\declmath@noindex@value
+    \symbolindex@output{variantof}\declmath@variantof@value
+    \symbolindex@output{label}\declmath@label@value
+    % essentially \def\symbolindex@mark@xxx{\symbolindex@writemark{id}\label{label}}
+    % where xxx is a textual representation of the currently defined macro
+    \ifx\declmath@macro@value\@undefined\else
+      \expandafter\def\expandafter\@tempa\expandafter{\declmath@macro@value}%
+      \edef\@tempa{\noexpand\@namedef{symbolindex@mark@\expandafter\strip@prefix\meaning\@tempa}{\noexpand\symbolindex@writemark{\number\declmath@id}\ifx\declmath@label@value\@undefined\else\noexpand\label{\declmath@label@value}\fi}}%
+      \@tempa
+      % Register macro to enable warning if unmarked, unless nopage=...
+      % (by adding \symbolindex@warn{id}{macro}{text} to \symbolindex@warn@list
+      %  with text := "macro (id: id)")
+      \ifx\declmath@nopage@value\@undefined
+        \expandafter\def\expandafter\@tempa\expandafter{\declmath@macro@value}%
+        \edef\@tempa{\noexpand\g@addto@macro\noexpand\symbolindex@warn@list
+                     {\noexpand\symbolindex@warn{\number\declmath@id}{%
+                         \expandafter\strip@prefix\meaning\@tempa}{(id: \number\declmath@id)}}}%
+        \@tempa
+      \fi
+    \fi
+  }
+  %
+  \newcounter{symbolindexmark}
+  %
+  % \symbolindex@writemark{id}:
+  % writes id.page=pageno,symbolindexmark (two counter values) to .syi-file
+  % and creates a label symbolindexmark--symbolindex at current position
+  % and marks the current macro as marked (for \symbolindex@warn)
+  \def\symbolindex@writemark##1{%
+    \refstepcounter{symbolindexmark}%
+    % create label
+    \expandafter\label\expandafter{\number\c@symbolindexmark--symbolindex}%
+    % output to .syi-file
+    \edef\@tempa{\noexpand\write\noexpand\symbolindex@out{##1.page=\noexpand\thepage,\number\c@symbolindexmark}}%
+    \@tempa
+    % marks as marked
+    \global\@namedef{symbolindex@marked@##1}{yes}%
+  }
+  %
+  % \symbolindexmark{\macro}
+  % registers current position as the place where \macro is defined (linked in symbol index)
+  % (by calling \symbolindex@writemark{id} for that macro)
+  \DeclareRobustCommand\symbolindexmark[1]{%
+    % \@tempa
+    \def\@tempa{##1}%
+    \@ifundefined{symbolindex@mark@\expandafter\strip@prefix\meaning\@tempa}{%
+      \toks@{##1}%
+      \PackageError{declmath/symbolindex}{Undeclared math symbol \the\toks@}{Declare it with \string\declare{macro=\the\toks@, ...}}%
+    }{\@nameuse{symbolindex@mark@\expandafter\strip@prefix\meaning\@tempa}}%
+  }
+  %
+  % \symbolindexentry{id}{symbol}{description}{pages}
+  \newcommand\symbolindexentry[4]{$##2$&##3&##4\\}
+  \newenvironment{thesymbolindex}{\begin{tabularx}{\hsize}{lXl}}{\end{tabularx}}
+  \newcommand\symbolindexpage[2]{\ifx\hyperref\@undefined##1\else\hyperref[##2]{##1}\fi}
+  \newcommand\printsymbolindex{{%
+      \makeatletter
+      \begin{thesymbolindex}
+        \InputIfFileExists{\jobname.sdx}{}{} % TODO: Warning if nonexisting
+      \end{thesymbolindex}
+    }}
+}
+
+{\catcode`\#=12 \gdef\declmath@hashletter{#}}
+% TODO: Document
+\DeclareVoidOption{htmlpopups}{%
+  \ifx\HCode\undefined
+    \typeout{Not running with tex4ht. Not activating 'htmlpopups' feature.}
+  \else
+  \declmath@register@end{%
+    \ifx\declmath@macro@value\@undefined\else
+    \ifx\declmath@code@value\@undefined\else
+    \edef\declmath@@htmlpopup@refid{\number\declmath@id}%
+    \ifdef\declmath@variantof@value{\ifcsdef{declmath:ref:\expandafter\string\declmath@variantof@value}{\letcs\declmath@@htmlpopup@refid{declmath:ref:\expandafter\string\declmath@variantof@value}}{}}{}%
+    \xappto\declmath@htmlpopup@newcommands{%
+      \noexpand\newcommand
+      \expandonce\declmath@macro@value
+      \csuse{declmath@argspec@value}%
+      {\noexpand\addtopopup{symidx-\declmath@@htmlpopup@refid}{\expandonce\declmath@code@value}}}%
+    \fi\fi
+  }%
+  % Defines \declmath@killdoublehash. \declmath@killdoublehash\macro expands \macro into a string, replacing all ## by #.
+  \edef\declmath@killdoublehash##1{\noexpand\expandafter\noexpand\expandafter\noexpand\expandafter\noexpand\declmath@killdoublehash@\noexpand\expandafter\noexpand\strip@prefix\noexpand\meaning##1\declmath@hashletter.\declmath@hashletter}
+  \edef\temp@a{%
+    \def\noexpand\declmath@killdoublehash@####1\declmath@hashletter ####2\declmath@hashletter{%
+      \noexpand\ifx\noexpand\@nil####2\noexpand\@nil
+        ####1\declmath@hashletter\noexpand\expandafter\noexpand\declmath@killdoublehash@
+      \noexpand\else
+        ####1%
+      \noexpand\fi}}%
+  \temp@a
+  \AfterEndPreamble{\HCode{\string\(\declmath@killdoublehash\declmath@htmlpopup@newcommands\string\)}}%
+  \AtEndDocument{{%
+      \renewcommand\symbolindexentry[4]{\HCode{<tr popupref="symidx-##1"><td>}{$##2$}\HCode{</td><td>}{##3}\HCode{</td><td>}{##4}\HCode{</td></tr>\Hnewline}}%
+      \renewcommand\symbolindexpage[2]{\hyperref[##2]{Def}}%
+      \HCode{<table id="popup-table" style="background:gray">\Hnewline}%
+      \InputIfFileExists{\jobname.sdx}{}{}% % TODO: Warning if nonexisting
+      \HCode{</table>}%
+    }}
   \fi
+  \def\declmath@htmlpopup@newcommands{}%
 }
-%
-\newcounter{symbolindexmark}
-%
-% \symbolindex@writemark{id}:
-% writes id.page=pageno,symbolindexmark (two counter values) to .syi-file
-% and creates a label symbolindexmark--symbolindex at current position
-% and marks the current macro as marked (for \symbolindex@warn)
-\def\symbolindex@writemark#1{%
-  \refstepcounter{symbolindexmark}%
-  % create label
-  \expandafter\label\expandafter{\number\c@symbolindexmark--symbolindex}%
-  % output to .syi-file
-  \edef\@tempa{\noexpand\write\noexpand\symbolindex@out{#1.page=\noexpand\thepage,\number\c@symbolindexmark}}%
-  \@tempa
-  % marks as marked
-  \global\@namedef{symbolindex@marked@#1}{yes}%
-}
-%
-% \symbolindexmark{\macro}{tex}
-% registers current position as the place where \macro is defined (linked in symbol index)
-% (by calling \symbolindex@writemark{id} for that macro)
-% The second argument is just rendered, possibly highlighted using \symbolindexmarkhighlight
-\DeclareRobustCommand\symbolindexmark[2]{%
-  \symbolindexmarkonly{#1}%
-  \symbolindexmarkhighlight{#2}%
-}
-\DeclareRobustCommand\symbolindexmarkonly[1]{%
-  % \@tempa
-  \def\@tempa{#1}%
-  \@ifundefined{symbolindex@mark@\expandafter\strip@prefix\meaning\@tempa}{%
-    \toks@{#1}%
-    \PackageError{declmath/symbolindex}{Undeclared math symbol \the\toks@}{Declare it with \string\declare{macro=\the\toks@, ...}}%
-  }{\@nameuse{symbolindex@mark@\expandafter\strip@prefix\meaning\@tempa}}%
-}
-%
-% \symbolindexentry{id}{symbol}{description}{pages}
-\newcommand\symbolindexentry[4]{\noindent\hbox{\hbox to 1.3in{$#2$\hfill}\parbox[t]{3.5in}{#3}\hbox to 1cm{\hfill #4}}\\[2pt]}
-\newenvironment{thesymbolindex}{\section*{Symbol index}\begin{center}}{\end{center}}
-%\newcommand\symbolindexentry[4]{$#2$&#3&#4\\}
-%\newenvironment{thesymbolindex}{\begin{tabularx}{\hsize}{lXl}}{\end{tabularx}}
-\newcommand\symbolindexpage[2]{\ifx\hyperref\@undefined#1\else\hyperref[#2]{#1}\fi}
-\newcommand\printsymbolindex{{%
-    \makeatletter
-    \begin{thesymbolindex}%
-      \InputIfFileExists{\jobname.sdx}{}{\PackageWarning{declmath}{\jobname.sdx not found. Did you run makesymind.pl?}}%
-    \end{thesymbolindex}%
-  }}
 
 
-\def\symbolindexmarkhighlight#1{#1}
-
+% Creates popups when symbols are clicked in the text.
+% Assumes pdflatex.
+% Requires postprocessing of the resulting PDF with "makesymind.py install-popups <file>.pdf".
+%
+% To change the appearance of the popup, redefine \symbolindexpopup
+\DeclareVoidOption{popups}{%
+  % We call the hook right here and not after processing options 
+  % because we want to be sure to add the hook before \declmath@code@value is used
+  \declmath@register@key{code}{\declmath@popup@addcodehook}%
+  {Option 'popup' adds a hook for displaying a popup here}
+  %
+  \def\declmath@popup@addcodehook{%
+    \edef\declmath@code@value{%
+      \noexpand\declmath@popup@show{\number\declmath@id}{\expandonce\declmath@code@value}}%
+    \typeout{Hooked: \meaning\declmath@code@value}}%
+  %
+  \def\declmath@popup@show##1##2{%
+    \pdfstartlink attr{/SYMIDX.SHOW (##1) /Subtype/Link /C[0 1 0] /Border[0 0 1]} user{}%
+    ##2%
+    \pdfendlink}%
+  %
+  % Otherwise pdfwr library (used by makesymind.py) can't read the PDF
+  \pdfobjcompresslevel=0\relax
+  %
+  % Create popups as individual pages after the rest of the document
+  %
+  % Important to use *After* and not AtEndDocument
+  % Otherwise there may still be a page pending shipout
+  % and our special pages come before.
+  % Then they our pages get hyperref destinations or similar intended
+  % for the pending page.
+  % This in turn leads to a corrupted document when removing our special pages.
+  \AfterEndDocument{{%
+      \count0=-1\relax % Make page-no's in log recognizeable as
+                       % special pages
+      \def\symbolindexentry##1##2##3##4{%
+        \declmath@popup@makepopuppage{##1}{\symbolindexpopup{##1}{##2}{##3}{##4}}}%
+      \def\label##1{}%
+      % This is how hyperref deactivated anchors in \NoHyper:
+      \let\hyper@anchor\ltx@gobble
+      \let\hyper@anchorstart\ltx@gobble
+      \def\hyper@anchorend{\Hy@xspace@end}%
+      \makeatletter
+      \InputIfFileExists{\jobname.sdx}{}{\PackageWarning{declmath/popups}{\jobname.sdx
+        not found. Run "makesymind.py \jobname".}} % TODO: Warning if nonexisting
+    }}%
+  %
+  %
+  \newcommand\declmath@popup@makepopuppage[2]{{%
+      \pdfpageattr{/SYMIDX.POPUP (##1)}%
+      \setbox\@tempboxa\hbox{##2}%
+      \pdfpagewidth=\wd\@tempboxa
+      \pdfpageheight=\ht\@tempboxa
+      \advance\pdfpageheight by\dp\@tempboxa
+      \hoffset=-1in\relax
+      \voffset=-1in\relax
+      \shipout\box\@tempboxa
+    }}%
+  % 
+  \newcommand\symbolindexpopup[4]{\colorbox{white}{\fcolorbox{black}{lightgray}{%
+        $##2$\qquad ##3
+        \ifx\@nil##4\@nil\else\qquad(page ##4)\fi}}}%
+}
 
 \ProcessKeyvalOptions*
+
+
+
+
+
+
 
 
 
 %%% Local Variables:
 %%% mode: latex
 %%% coding: latin-1
-%%% TeX-master: "ghost"
+%%% TeX-master: "language"
 %%% End:
 %%% Local IspellDict: american

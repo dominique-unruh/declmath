@@ -1,29 +1,4 @@
 #!/usr/bin/python
-### -*- buffer-read-only: t -*-
-### MAC=e2d0394e6f42e904b5ea02d618e436298288e940
-### LEN=11660
-### CONTENT_SHA1=7f656717316cc7586c6eb179e1320e92c75ac2fa
-### 
-### 
-### 
-### *** WARNING ***
-### This is not the master copy of this file.
-### You can edit this copy, nothing bad will happen.
-### But it will prevent Dominique Unruh from automatically
-### transferring changes from the master copy to this copy.
-### Be prepared to answer to Dominique!
-### 
-### (If you are Dominique Unruh, disregard the above warning.)
-### 
-### 
-### 
-### 
-### Source: /home/unruh/svn/home/eclipse/math_parse/makesymind.py
-### SVN: 67305
-### 
-### 
-### 
-#!/usr/bin/python
 
 import sys, re, string
 
@@ -40,6 +15,7 @@ class Symbol():
     code = ""
     description = ""
     pages = tuple()
+    label = ""
 
     def __init__(self, args):
         """Takes a bunch of attrs and passes them to ``set_attrs``"""
@@ -59,6 +35,8 @@ class Symbol():
                 self.set_placeholder(args[1])
             if args[0] == "code":
                 self.set_code(args[1])
+            if args[0] == "label":
+                self.set_label(args[1])
             if args[0] == "description":
                 self.set_description(args[1])
             if args[0] in page_tab:
@@ -78,6 +56,8 @@ class Symbol():
         self.placeholder = val
     def set_code(self, val):
         self.code = val
+    def set_label(self, val):
+        self.label = val
     def set_description(self, val):
         self.description = val
     def set_pages(self, val):
@@ -116,9 +96,10 @@ def load_symbols(file):
 def write_index(basename):
     global symbols
     symbols=list(symbols.values())
-    symbols.sort(key=lambda symbol: symbol.pages)
-
-    #sorted((d for d in x if d['student']==1), key=itemgetter('age'))
+    # sort by pages
+    # symbols.sort(key=lambda symbol: symbol.pages)
+    # sort by labels
+    symbols.sort(key=lambda symbol: symbol.label)
 
     with open(basename+".sdx",'wt') as f:
         for sym in symbols:
@@ -143,29 +124,6 @@ def write_index(basename):
 %%% coding: latin-1
 %%% TeX-master: "{1}"
 %%% End:""".format("Local",basename))
-
-#     with open(basename+".sdx",'wt') as f:
-#         for id in symbols:
-#             sym = symbols[id]
-#             if "noindex" in sym: continue
-#             if "variantof" in sym: continue
-#             if not "macro" in sym: fail("id {0} has no macro definition".format(id))
-#             macro = sym["macro"]
-#             if "placeholder" in sym: placeholder=sym["placeholder"]
-#             elif "code" in sym: placeholder=sym["code"]
-#             else: placeholder=macro
-#             if not "description" in sym: fail("id {0} (macro {1}) has no description".format(id,macro))
-#             description=sym["description"]
-#             pages = sym["page*"] if "page*" in sym else []
-#             pages = ["\\symbolindexpage{{{0}}}{{{1}--symbolindex}}".format(*string.split(p,",")) for p in pages]
-#             pages = string.join(pages,", ")
-#             f.write("\\symbolindexentry{{{0}}}{{{1}}}{{{2}}}{{{3}}}\n".
-#                     format(id,placeholder,description,pages))
-#         f.write("""%%% {0} Variables:
-# %%% mode: latex
-# %%% coding: latin-1
-# %%% TeX-master: "{1}"
-# %%% End:""".format("Local",basename))
 
 
 
