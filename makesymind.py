@@ -117,7 +117,7 @@ def write_index(basename):
             pages = sym.pages
             # write everything down
             pages = ["\\symbolindexpage{{{0}}}{{{1}--symbolindex}}".format(p[0], p[1]) for p in pages]
-            pages = string.join(pages,", ")
+            pages = ", ".join(pages)
             f.write("\\symbolindexentry{{{0}}}{{{1}}}{{{2}}}{{{3}}}\n".
                     format(sym.id,placeholder,description,pages))
         f.write("""%%% {0} Variables:
