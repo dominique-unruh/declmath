@@ -1,5 +1,6 @@
 #!/usr/bin/python
 
+from __future__ import print_function
 import sys, re, string
 
 true_tab = ["true", "yes"]
@@ -75,7 +76,7 @@ class Symbol():
 ########## Symbol index generation code #############
 
 def fail(msg):
-    print >>sys.stderr, msg
+    print(msg, file=sys.stderr)
     exit(1)
 
 symbols = dict()
@@ -233,7 +234,7 @@ def popup_make_ocgs(num):
         ocgs.append(ocg)
 
     if popup_pdf.Root.OCProperties:
-        print "Root.OCProperties already exists"
+        print("Root.OCProperties already exists")
     ocgs = PdfArray(ocgs)
     #ocgs.indirect = True
     popup_pdf.Root.OCProperties = PdfDict(OCGs=ocgs,
@@ -329,7 +330,7 @@ def popup_hide_links(hide_ocmd):
     for page in popup_pdf.pages:
         for annot in page.Annots if page.Annots else ():
             if annot.OC:
-                print "Annotation {} already has an /OC-entry. Ignoring.".format(annot.OC)
+                print("Annotation {} already has an /OC-entry. Ignoring.".format(annot.OC))
             annot.OC = hide_ocmd
 
 # Creates, on each page, a whole page link that deactivates all OCGs
