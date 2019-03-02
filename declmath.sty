@@ -50,14 +50,15 @@
   \setkeys{declmath-keys}{#1}%
   \declmath@end
 }
+
 %Define keys
 \declmath@register@key{macro}{}{Name of macro to be declared (may also be a non-macro like "+" or "a" or an existing macro, don't use code=... then)}
 \declmath@register@key{code}{}{Code of the macro (i.e., does \string\newcommand{macro}{code})}
 \declmath@register@key{argspec}{}{Specifies which arguments the macro takes (\string\newcommand-style, like [1][default])}
 \declmath@register@key{wrap}{}{Specifies a wrapper for the macro code. 
-	wrap=none uses none.
-	wrap=weakgroup (default) uses \string\begingroup\string\endgroup.
-	wrap=group puts it in a {}-group (allows $a^\string\macro$ instead of $a^{\string\macro}$).}
+														   	 wrap=none uses none.
+														   	 wrap=weakgroup (default) uses \string\begingroup\string\endgroup.
+														   	 wrap=group puts it in a {}-group (allows $a^\string\macro$ instead of $a^{\string\macro}$).}
 \declmath@register@key{variable}{}{Indicates that this is a variable, not a mathematical symbol (relevant for conversion to MathML)}
 \declmath@register@key{placeholder}{}{Placeholder for this macro in symbol index}
 \declmath@register@key{description}{}{Description for this macro in symbolindex}
@@ -66,25 +67,21 @@
 \declmath@register@key{noindex}{}{noindex=true (or yes/1/anything) will remove this symbol from the index}
 \declmath@register@key{variantof}{}{variantof=\string\macro indicates that the symbolindex entry for \string\macro applies to the current macro (current macro has no own index entry)}
 \declmath@register@end{%
-	\ifx\declmath@macro@value\@undefined
-	\else
-		\ifx\declmath@code@value\@undefined
-		\else
-			% Calls \newcommand<macro><argspec>{\declmath@wrapper@<wrap>{<code>}}
-			\letcs\@tempa{declmath@wrapper@\csuse{declmath@wrap@value}}%
-			\ifdef\@tempa{}{\PackageError{declmath/define}{Unknown wrapper wrap=\declmath@wrap@value}{Try, e.g., wrap=group}}%
-			\edef\@tempb{\noexpand\newcommand
-				\expandonce\declmath@macro@value
-				\csuse{declmath@argspec@value}%
-				{\@tempa{\expandonce\declmath@code@value}}}%
-			\typeout{DECLMATH: define command: \meaning\@tempb}%
-			\@tempb
-		\fi
-	\fi
+	\ifx\declmath@macro@value\@undefined\else
+	\ifx\declmath@code@value\@undefined\else
+	% Calls \newcommand<macro><argspec>{\declmath@wrapper@<wrap>{<code>}}
+	\letcs\@tempa{declmath@wrapper@\csuse{declmath@wrap@value}}%
+	\ifdef\@tempa{}{\PackageError{declmath/define}{Unknown wrapper wrap=\declmath@wrap@value}{Try, e.g., wrap=group}}%
+	\edef\@tempb{\noexpand\newcommand
+							   \expandonce\declmath@macro@value
+							   \csuse{declmath@argspec@value}%
+			                   {\@tempa{\expandonce\declmath@code@value}}}%
+	\typeout{DECLMATH: define command: \meaning\@tempb}%
+	\@tempb
+	\fi	\fi
 	%
 	% Allows to look up the \declmath@id of the current definition through the macro name
-	\ifx\declmath@macro@value\@undefined
-	\else
+	\ifx\declmath@macro@value\@undefined\else
 		\csxdef{declmath:ref:\expandafter\string\declmath@macro@value}{\number\declmath@id}%
 	\fi
 }
@@ -126,20 +123,13 @@
 	\symbolindex@output{label}\declmath@label@value
 	% essentially \def\symbolindex@mark@xxx{\symbolindex@writemark{id}\label{label}}
 	% where xxx is a textual representation of the currently defined macro
-	\ifx\declmath@macro@value\@undefined %
-	\else
+	\ifx\declmath@macro@value\@undefined\else
 		\expandafter\def\expandafter\@tempa\expandafter{\declmath@macro@value}%tempa=macro
-		\edef\@tempa{
-			\noexpand\@namedef{symbolindex@mark@\expandafter\strip@prefix\meaning\@tempa}{
-				\noexpand\symbolindex@writemark{\number\declmath@id}
-				\ifx\declmath@label@value\@undefined
-				\else
-					\noexpand\label{\declmath@label@value}
-				\fi}}
+		\edef\@tempa{\noexpand\@namedef{symbolindex@mark@\expandafter\strip@prefix\meaning\@tempa}{\noexpand\symbolindex@writemark{\number\declmath@id}\ifx\declmath@label@value\@undefined\else\noexpand\label{\declmath@label@value}\fi}}%
 		\@tempa
-	% Register macro to enable warning if unmarked, unless nopage=...
-	% (by adding \symbolindex@warn{id}{macro}{text} to \symbolindex@warn@list
-	%  with text := "macro (id: id)")
+	    % Register macro to enable warning if unmarked, unless nopage=...
+    	% (by adding \symbolindex@warn{id}{macro}{text} to \symbolindex@warn@list
+	    %  with text := "macro (id: id)")
 		\ifx\declmath@noindex@value\@undefined
 			\ifx\declmath@nopage@value\@undefined			
 				\expandafter\def\expandafter\@tempa\expandafter{\declmath@macro@value}%
@@ -190,9 +180,11 @@
 }
 %\def\symbolindexmarkhighlight#1{#1}
 
+% \symbolindexentry{id}{symbol}{description}{pages}
 % How to print the symbol index:
 \newcommand\symbolindexentry[4]{$#2$&#3&#4\\}
 \newenvironment{thesymbolindex}{\begin{tabularx}{\hsize}{lXl}}{\end{tabularx}}
+%or
 %\newcommand\symbolindexentry[4]{\noindent\hbox{\hbox to 1.3in{$#2$\hfill}\parbox[t]{3.5in}{#3}\hbox to 1cm{\hfill #4}}\\[2pt]}
 %\newenvironment{thesymbolindex}{\section*{Symbol index}\begin{center}}{\end{center}} 
 \newcommand\symbolindexpage[2]{\ifx\hyperref\@undefined#1\else\hyperref[#2]{#1}\fi}
