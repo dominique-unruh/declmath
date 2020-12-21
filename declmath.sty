@@ -183,7 +183,7 @@
 \newcommand\printsymbolindex{{%
     \makeatletter
     \begin{thesymbolindex}%
-      \InputIfFileExists{\jobname.sdx}{}{\PackageWarning{declmath}{\jobname.sdx not found. Did you run makesymind.pl?}}%
+      \InputIfFileExists{\jobname.sdx}{}{\PackageWarning{declmath}{File `\jobname.sdx' not found. Did you run makesymind.pl?}}%
     \end{thesymbolindex}%
   }}
 
