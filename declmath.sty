@@ -188,6 +188,19 @@
   }}
 
 
+% Based on https://tex.stackexchange.com/a/33402/89792
+\newcommand{\declmath@mathcolorbox}[2]{\mathchoice%
+  {\colorbox{#1}{$\displaystyle#2$}}%
+  {\colorbox{#1}{$\textstyle#2$}}%
+  {\colorbox{#1}{$\scriptstyle#2$}}%
+  {\colorbox{#1}{$\scriptscriptstyle#2$}}}%
+
+% One possible choice for \symbolindexmarkhighlight.
+% Use \let\symbolindexmarkhighlight\symbolindexmarkhighlightGRAYBOX to activate
+\def\symbolindexmarkhighlightGRAYBOX#1{%
+  \setlength{\fboxsep}{2pt}%
+  {\TextOrMath{\colorbox{gray!20}{#1}}{\declmath@mathcolorbox{gray!20}{#1}}}}
+
 \def\symbolindexmarkhighlight#1{#1}
 
 
@@ -198,6 +211,6 @@
 %%% Local Variables:
 %%% mode: latex
 %%% coding: latin-1
-%%% TeX-master: "ghost"
+%%% TeX-master: "compressed-permutations"
 %%% End:
 %%% Local IspellDict: american
