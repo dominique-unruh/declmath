@@ -6,7 +6,7 @@ import sys, re, string
 ########## Symbol index generation code #############
 
 def fail(msg):
-    print >>sys.stderr, msg
+    print(msg, file=sys.stderr)
     exit(1)
 
 symbols = dict()
@@ -38,8 +38,8 @@ def write_index(basename):
             if not "description" in sym: fail("id {0} (macro {1}) has no description".format(id,macro))
             description=sym["description"]
             pages = sym["page*"] if "page*" in sym else []
-            pages = ["\\symbolindexpage{{{0}}}{{{1}--symbolindex}}".format(*string.split(p,",")) for p in pages]
-            pages = string.join(pages,", ")
+            pages = ["\\symbolindexpage{{{0}}}{{{1}--symbolindex}}".format(*p.split(",")) for p in pages]
+            pages = ", ".join(pages)
             f.write("\\symbolindexentry{{{0}}}{{{1}}}{{{2}}}{{{3}}}%\n".
                     format(id,placeholder,description,pages))
         f.write("""%%% {0} Variables:
@@ -156,7 +156,7 @@ def popup_make_ocgs(num):
         ocgs.append(ocg)
 
     if popup_pdf.Root.OCProperties:
-        print "Root.OCProperties already exists"
+        print("Root.OCProperties already exists")
     ocgs = PdfArray(ocgs)
     #ocgs.indirect = True
     popup_pdf.Root.OCProperties = PdfDict(OCGs=ocgs,
@@ -252,7 +252,7 @@ def popup_hide_links(hide_ocmd):
     for page in popup_pdf.pages:
         for annot in page.Annots if page.Annots else ():
             if annot.OC:
-                print "Annotation {} already has an /OC-entry. Ignoring.".format(annot.OC)
+                print("Annotation {} already has an /OC-entry. Ignoring.".format(annot.OC))
             annot.OC = hide_ocmd
 
 # Creates, on each page, a whole page link that deactivates all OCGs
